@@ -60,7 +60,7 @@ Create app on vagrant up/reload:
 
 ```yaml
 aliases:
-  - 0.test # must be
+  - wpi.test # must be
 ```
 
 Check README_CONFIG.md for more information about app configuration and setup
@@ -68,7 +68,7 @@ Check README_CONFIG.md for more information about app configuration and setup
 How it works
 ============
 
-if you call http://0.test it will search for a index.php inside the /var/www/0.test/web folder. It is really easy to start with any application.
+if you call http://wpi.test it will search for a index.php inside the /var/www/wpi.test/web folder. It is really easy to start with any application.
 
 Special
 =======
@@ -104,4 +104,4 @@ Change Log
 [wpdistillery.org](https://wpdistillery.org)
 
 ## What is WPDistillery?
-WP Distillery does all the work for you when setting up a new WordPress project with EasyEngine.
+WP Distillery does all the work for you when setting up a new WordPress project with WordOps.

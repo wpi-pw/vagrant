@@ -1,0 +1,24 @@
+# Configuration for wpi-box
+#
+# Author: Dima Minka
+# URL: https://wpi.pw/box/
+#
+# File Version: 1.2.2
+
+ip: "192.168.13.100"
+memory: 1024
+cpus: 1
+hostname: wpi-box
+provider: parallels
+wpi_email: test@wpi.test # for git and wo notification
+wpi_user: test # for git and wo notification
+vm_box: wpi/box
+
+authorize: ~/.ssh/id_rsa.pub
+
+keys:
+  - ~/.ssh/id_rsa
+
+apps:
+  - host: wpi.test
+    repo: wpi

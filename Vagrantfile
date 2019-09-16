@@ -1,18 +1,22 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 #
-# Vagrantfile using cdk-comp/vagrant-easyengine
-# Check out https://github.com/cdk-comp/vagrant-easyengine-install to learn more about cdk-comp/vagrant-easyengine
+# Vagrantfile using wpi/box
+# Check out https://github.com/wpi-pw/box to learn more about wpi/box
 #
 # Author: Dima Minka
-# URL: https://cdk.co.il
+# URL: https://wpi.pw/box/
 #
 # File Version: 1.2.2
 
 require 'yaml'
 
 # Load the settings file
-settings = YAML.load_file(File.join(File.dirname(__FILE__), "vagrant-conf.yml"))
+if(File.exist?("wpi-custom.yml"))
+  settings = YAML.load_file(File.join(File.dirname(__FILE__), "wpi-custom.yml"))
+else
+  settings = YAML.load_file(File.join(File.dirname(__FILE__), "wpi-default.yml"))
+end
 
 # Detect host OS for different folder share configuration
 module OS
@@ -34,7 +38,7 @@ module OS
 end
 
 Vagrant.configure("2") do |config|
-  config.vm.box = settings["vm_box"] ||= "cdk-comp/vagrant-easyengine"
+  config.vm.box = settings["vm_box"] ||= "wpi/box"
   config.vm.provider settings["provider"] ||= "virtualbox"
 
   [
@@ -48,12 +52,6 @@ Vagrant.configure("2") do |config|
       if (not req.satisfied_by?(s.version)) && plugin[:name] == s.name
         raise "#{plugin[:name]} #{plugin[:version]} is required. Please run `vagrant plugin install #{plugin[:name]}`"
       end
-    end
-  end
-
-  if OS.windows?
-    if !Vagrant.has_plugin?('vagrant-winnfsd')
-      puts "The vagrant-winnfsd plugin is required. Please install it with \"vagrant plugin install vagrant-winnfsd\""
     end
   end
 
@@ -77,10 +75,14 @@ Vagrant.configure("2") do |config|
   config.hostmanager.include_offline = true
 
   config.vm.define "project" do |node|
-    node.vm.hostname = settings['hostname'] ||= 'vagrant-easyengine'
-    node.vm.network :private_network, ip: settings['ip'] ||= '192.168.100.100'
+    node.vm.hostname = settings['hostname'] ||= 'wpi-box'
+    node.vm.network :private_network, ip: settings['ip'] ||= '192.168.13.100'
 
-    node.hostmanager.aliases = [settings['aliases']]
+    settings['apps'].each do |app|
+      node.hostmanager.aliases = app['host']
+    end
+
+    node.hostmanager.aliases = [settings['apps'].map{|l| l['host']}]
 
     config.vm.network :forwarded_port, guest: 80, host: 8080
     config.vm.network :forwarded_port, guest: 443, host: 443
@@ -99,7 +101,7 @@ Vagrant.configure("2") do |config|
   # Copy The SSH Private Keys To The Box
   if settings.include? 'keys'
     if settings["keys"].to_s.length == 0
-      puts "Check your vagrant-conf.yml file, you have no private key(s) specified."
+      puts "Check your wpi-default.yml file, you have no private key(s) specified."
       exit
     end
     settings["keys"].each do |key|
@@ -110,7 +112,7 @@ Vagrant.configure("2") do |config|
           s.args = [File.read(File.expand_path(key)), key.split('/').last]
         end
       else
-        puts "Check your vagrant-conf.yml file, the path to your private key does not exist."
+        puts "Check your wpi-default.yml file, the path to your private key does not exist."
         exit
       end
     end
@@ -119,74 +121,65 @@ Vagrant.configure("2") do |config|
   # Disabling the default /vagrant share
   config.vm.synced_folder '.', '/vagrant', disabled: true
 
-  # Register All Of The Configured Shared Folders
-  if settings.include? 'folders'
-    settings["folders"].each do |folder|
-      if File.exists? File.expand_path(folder["map"])
-        # Use vagrant-winnfsd if available https://github.com/flurinduerst/WPDistillery/issues/78
-        if Vagrant.has_plugin? 'vagrant-winnfsd'
-          config.vm.synced_folder folder["map"], folder["to"],
-            nfs: true,
-            mount_options: [
-            'nfsvers=3',
-            'vers=3',
-            'actimeo=1',
-            'rsize=8192',
-            'wsize=8192',
-            'timeo=14'
-            ]
-        else
-          config.vm.synced_folder folder["map"], folder["to"], owner: "www-data", group: "www-data", disabled: false, create: true
-        end
-      end
-    end
-  end
+  # Register The Configured Shared Folder
+  config.vm.synced_folder "apps", "/home/vagrant/apps", owner: "www-data", group: "www-data", disabled: false, create: true
 
   config.ssh.forward_agent = true
 
   # Configure The email
-  if settings["vagrant_email"].to_s.length == 0
-    puts "Check your vagrant-conf.yml file, you have no vagrant_email specified."
+  if settings["wpi_email"].to_s.length == 0
+    puts "Check your wpi-default.yml file, you have no wpi_email specified."
     exit
   else
     config.vm.provision "shell" do |s|
-      s.inline = "echo $1$2 | grep -xq \"$1$2\" /home/vagrant/.bash_profile || echo \"\n$1$2\" | tee -a /home/vagrant/.bash_profile"
-      s.args   = ['export vagrant_email=', settings["vagrant_email"]]
+      s.inline = "echo $1$2 | grep -xq -s \"$1$2\" /home/vagrant/.bash_profile || echo \"\n$1$2\" | tee -a /home/vagrant/.bash_profile"
+      s.args   = ['export wpi_email=', settings["wpi_email"]]
     end
   end
 
   # Configure The user
-  if settings["vagrant_user"].to_s.length == 0
-    puts "Check your vagrant-conf.yml file, you have no vagrant_user specified."
+  if settings["wpi_user"].to_s.length == 0
+    puts "Check your wpi-default.yml file, you have no wpi_user specified."
     exit
   else
     config.vm.provision "shell" do |s|
-      s.inline = "echo $1$2 | grep -xq \"$1$2\" /home/vagrant/.bash_profile || echo \"\n$1$2\" | tee -a /home/vagrant/.bash_profile"
-      s.args   = ['export vagrant_user=', settings["vagrant_user"]]
+      s.inline = "echo $1$2 | grep -xq -s \"$1$2\" /home/vagrant/.bash_profile || echo \"\n$1$2\" | tee -a /home/vagrant/.bash_profile"
+      s.args   = ['export wpi_user=', settings["wpi_user"]]
     end
   end
 
-  # WPDistillery Windows Support
-  if Vagrant::Util::Platform.windows?
-    config.vm.provision "shell",
-    inline: "echo \"Converting Files for Windows\" && sudo apt-get install -y dos2unix && cd /var/www/ && dos2unix wpdistillery/config.yml && dos2unix wpdistillery/provision.sh && dos2unix wpdistillery/wpdistillery.sh",
-    run: "always", privileged: false
-  end
-
-  if settings["vm_box"] == "cdk-comp/vagrant-easyengine"
+  if settings["vm_box"] == "wpi/box"
     # Basic provison for new box
-    config.vm.provision "shell", path: "provision/provision.sh"
-    # Run app create with custom configuration
-    if settings["app_installer"] == true
-      if settings.include? 'aliases'
-        config.vm.provision "file", source: "provision/vagrant_up.sh", destination: "vagrant_up.sh", run: "always"
-        settings["aliases"].each do |host|
-          config.vm.provision "shell", run: "always" do |s|
-            s.inline = "sudo bash vagrant_up.sh $1"
-            s.args   = host
-          end
-        end
-      end
-    end
+    $script = <<-SCRIPT
+    source /home/vagrant/.bash_profile
+    echo "=============================="
+    echo "You can replace $wpi_user with your username & $wpi_email by your email in wpi-default.yml"
+    echo "=============================="
+    sudo chown vagrant:vagrant /home/vagrant/.[^.]*
+    sudo echo -e "source ~/.bashrc\n" >> /home/vagrant/.bash_profile
+    sudo echo -e "[user]\n\tname = $wpi_user\n\temail = $wpi_email" > /home/vagrant/.gitconfig
+
+    echo "=============================="
+    echo "Copy gitconfig and bash_profile to www-data directory"
+    echo "=============================="
+    sudo cp /home/vagrant/{.gitconfig,.bash_profile} /var/www
+    sudo chown www-data:www-data /var/www/.[^.]*
+
+    echo "=============================="
+    echo "copy keys from vagrant directory to www-data and root"
+    echo "=============================="
+    ssh-keyscan -H bitbucket.org >> /home/vagrant/.ssh/known_hosts
+    ssh-keyscan -H github.com >> /home/vagrant/.ssh/known_hosts
+    sudo cp -r /home/vagrant/.ssh /var/www/.ssh
+    sudo chown -R www-data:www-data /var/www/.ssh
+
+    echo "=============================="
+    echo "move files to vagrant apps and make the symlink"
+    echo "=============================="
+    sudo mv /var/www/{.,}* /home/vagrant/apps 2>/dev/null
+    sudo mv /var/www /var/www-disabled 2>/dev/null
+    sudo ln -s /home/vagrant/apps /var/www
+    SCRIPT
+    config.vm.provision "shell", inline: $script
   end
 end
