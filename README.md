@@ -1,12 +1,10 @@
-![Vagrant-EasyEngine Screenshot](https://user-images.githubusercontent.com/12497991/45975046-d39a8700-c04b-11e8-8ec4-1c6723645b26.jpg)
+**Version Beta** (09.2019)
 
-**Version Beta** (24.09.2018)
-
-Vagrant EasyEngine for modern WordPress development
+Vagrant WordOps for modern WordPress development via WPI
 ========================
-[EasyEngine](https://github.com/rtCamp/easyengine) - [Vagrant](https://vagrantup.com/) - [Parallels](https://www.parallels.com) - [VirtualBox](https://www.virtualbox.org)
+[WordOps](https://wordops.net) - [Vagrant](https://vagrantup.com/) - [VagrantCloud](https://app.vagrantup.com/wpi/boxes/box) - [Parallels](https://www.parallels.com) - [VirtualBox](https://www.virtualbox.org)
 
-A lemp stack with EasyEngine, Ubuntu 16.04/18.04, vagrant, nginx, apache, php-5-7.2, php-fpm, mysql 5.7, git, composer, wordmove and more.
+A lemp stack with WordOps, Ubuntu 16.04/18.04, vagrant, nginx, apache, php-5-7.3, php-fpm, MariaDB 10.3, git, composer, wp-cli and more.
 
 Install
 =======
@@ -44,14 +42,10 @@ Install
  $ vagrant plugin install vagrant-parallels
  ```
 
-4. start vagrant with virtual box
+4. start vagrant with parallels
  ```bash
  $ vagrant up
- ```
- or with parallels
- ```bash
- $ vagrant up --provider=parallels
- ```
+ ````
 
 Config Option
 =============
@@ -66,7 +60,7 @@ Create app on vagrant up/reload:
 
 ```yaml
 aliases:
-  - app.test # must be
+  - 0.test # must be
 ```
 
 Check README_CONFIG.md for more information about app configuration and setup
@@ -74,7 +68,7 @@ Check README_CONFIG.md for more information about app configuration and setup
 How it works
 ============
 
-if you call http://0.test it will search for a index.php inside the /var/www/0.test/htdocs folder. It is really easy to start with any application.
+if you call http://0.test it will search for a index.php inside the /var/www/0.test/web folder. It is really easy to start with any application.
 
 Special
 =======
@@ -95,32 +89,8 @@ $ ssh www-data@app.test
 
 ```
 
-Switch php7 to php72
-====================
-```bash
-$ vagrant ssh
-$ sudo ee site edit app.test
-```
-
-Find line with **7.conf** and change to **72.conf**
-
-old config
-```txt
-include common/php7.conf;
-include common/locations-php7.conf;
-```
-
-new config
-```txt
-include common/php72.conf;
-include common/locations-php72.conf;
-```
-
 TODO
 ==========
-- [ ] cdkrock autoinstall support
-- [ ] movefile auto init
-- [ ] PHP 7.1/7.2 auto config on install
 - [ ] Script for fast project init: repo creation, staging creation and more (runcloud api)
 - [ ] Remove all .git directories if exist key
 - [ ] Make new repo on vagrant_up
@@ -129,7 +99,7 @@ Change Log
 ==========
 
 
-## Credit to WPDistillery and EasyEngine
+## Credit to WPDistillery and WordOps
 
 [wpdistillery.org](https://wpdistillery.org)
 
