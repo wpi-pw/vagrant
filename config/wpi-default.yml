@@ -21,4 +21,10 @@ keys:
 
 apps:
   - host: wpi.test
-    repo: wpi
+    status: enable # disable
+    type: git # bedrock, composer, git, html, wpi, wp
+    scm: github
+    repo: wpi-pw/app
+    branch: master
+    composer: cdk-comp/bedrock
+    public_path: web

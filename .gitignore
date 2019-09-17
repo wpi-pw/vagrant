@@ -2,8 +2,8 @@
 !LICENSE
 !README.md
 !Vagrantfile
-!wpi-default.yml
-
+!config/wpi-default.yml
+!config/wpi-init.shp
 
 ### Ignore all
 *
