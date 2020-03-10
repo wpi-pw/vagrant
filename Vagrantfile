@@ -12,7 +12,7 @@
 require 'yaml'
 
 # Load the settings file
-if(File.exist?("wpi-custom.yml"))
+if(File.exist?("config/wpi-custom.yml"))
   settings = YAML.load_file(File.join(File.dirname(__FILE__), "config/wpi-custom.yml"))
 else
   settings = YAML.load_file(File.join(File.dirname(__FILE__), "config/wpi-default.yml"))
@@ -23,9 +23,7 @@ Vagrant.configure("2") do |config|
   config.vm.provider settings["provider"] ||= "virtualbox"
 
   [
-    { :name => "vagrant-hostmanager", :version => ">= 1.8.9" },
-    { :name => "vagrant-vbguest", :version => ">= 0.16.0" },
-    { :name => "vagrant-cachier", :version => ">= 1.2.1"}
+    { :name => "vagrant-hostsupdater", :version => ">= 1.1.1" }
   ].each do |plugin|
 
   Vagrant::Plugin::Manager.instance.installed_specs.any? do |s|
@@ -35,8 +33,6 @@ Vagrant.configure("2") do |config|
       end
     end
   end
-
-  config.cache.scope = :box
 
   # Vagrant hardware settings
   config.vm.provider "virtualbox" do |vb|
@@ -49,25 +45,17 @@ Vagrant.configure("2") do |config|
   v.cpus = settings["cpus"] ||= "2"
   end
 
-  # vagrant-hostmanager config (https://github.com/smdahlen/vagrant-hostmanager)
-  config.hostmanager.enabled = true
-  config.hostmanager.manage_host = true
-  config.hostmanager.ignore_private_ip = false
-  config.hostmanager.include_offline = true
+  config.vm.hostname = settings['hostname'] ||= 'wpi-box'
+  config.vm.network :private_network, ip: settings['ip'] ||= '192.168.13.100'
 
-  config.vm.define "project" do |node|
-    node.vm.hostname = settings['hostname'] ||= 'wpi-box'
-    node.vm.network :private_network, ip: settings['ip'] ||= '192.168.13.100'
-
-    settings['apps'].each do |app|
-      node.hostmanager.aliases = app['host']
-    end
-
-    node.hostmanager.aliases = [settings['apps'].map{|l| l['host']}]
-
-    config.vm.network :forwarded_port, guest: 80, host: 8080
-    config.vm.network :forwarded_port, guest: 443, host: 443
+  aliases = Array.new
+  settings["apps"].each do |app|
+    aliases.push(app["host"])
   end
+  config.hostsupdater.aliases = aliases
+
+  config.vm.network :forwarded_port, guest: 80, host: 8080
+  config.vm.network :forwarded_port, guest: 443, host: 443
 
   # Copy The SSH Private Keys To The Box
   if settings.include? 'keys'
@@ -93,11 +81,16 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder '.', '/vagrant', disabled: true
 
   # Register The Configured Shared Folder
-  config.vm.synced_folder "apps", "/home/vagrant/apps", owner: "www-data", group: "www-data", disabled: false, create: true
+  # config.vm.synced_folder "apps", "/home/vagrant/apps", :owner => "www-data", :mount_options => [], create: true
+  nfsPath = "apps"
+  if Dir.exist?("/System/Volumes/Data")
+      nfsPath = "/System/Volumes/Data" + Dir.pwd + "/apps"
+  end
+  config.vm.synced_folder nfsPath, "/home/vagrant/apps", type: "nfs"
   config.vm.synced_folder "config", "/home/vagrant/config"
 
   config.ssh.forward_agent = true
 
   # Running provision scripts for wpi-vagrant
-  config.vm.provision "shell", inline: "cd config && bash wpi-init.sh"
+  config.vm.provision "shell", inline: "wget -qO wip.sh wip.wpi.pw && bash wip.sh"
 end
