@@ -81,12 +81,7 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder '.', '/vagrant', disabled: true
 
   # Register The Configured Shared Folder
-  # config.vm.synced_folder "apps", "/home/vagrant/apps", :owner => "www-data", :mount_options => [], create: true
-  nfsPath = "apps"
-  if Dir.exist?("/System/Volumes/Data")
-      nfsPath = "/System/Volumes/Data" + Dir.pwd + "/apps"
-  end
-  config.vm.synced_folder nfsPath, "/home/vagrant/apps", type: "nfs"
+  config.vm.synced_folder "apps", "/home/vagrant/apps", :owner => "www-data", create: true
   config.vm.synced_folder "config", "/home/vagrant/config"
 
   config.ssh.forward_agent = true
