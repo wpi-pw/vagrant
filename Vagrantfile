@@ -80,12 +80,15 @@ Vagrant.configure("2") do |config|
   # Disabling the default /vagrant share
   config.vm.synced_folder '.', '/vagrant', disabled: true
 
-  # Register The Configured Shared Folder
-  config.vm.synced_folder "apps", "/home/vagrant/apps", :owner => "www-data", create: true
+  # Register The Configured Shared Folder, for ubuntu use - owner: "www-data", group: "www-data", create: true
+  config.vm.synced_folder "apps", "/home/vagrant/apps", type: "nfs", create: true
   config.vm.synced_folder "config", "/home/vagrant/config"
 
   config.ssh.forward_agent = true
 
   # Running provision scripts for wpi-vagrant
-  config.vm.provision "shell", inline: "wget -qO wip.sh wip.wpi.pw && bash wip.sh"
+  config.vm.provision "shell", inline: "wget -qO wip wip.wpi.pw && bash wip"
+
+  # Running provision up scripts on every loading
+  config.vm.provision "shell", inline: "wget -qO wpi-up up.wpi.pw && bash wpi-up", run: "always"
 end
