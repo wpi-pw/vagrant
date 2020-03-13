@@ -21,11 +21,10 @@ keys:
 
 apps:
   - host: wpi.test
-    status: created # create, disable, enable
-    type: wpi # bedrock, composer, git, html, wpi, wp
-    scm: github # github, bitbucket
-    repo: wpi-pw/app # username/repo-name
-    branch: master
-    composer: "" # dev in progress
+    status: create # create, disable, enable
+    git:
+      scm: github # github, bitbucket
+      repo: wpi-pw/app # username/repo-name
+      branch: master
     php: php73 # php72
     public_path: htdocs/web # it works only during creation
