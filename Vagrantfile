@@ -12,7 +12,7 @@
 require 'yaml'
 
 # Load the settings file
-if(File.exist?("config/wpi-custom.yml"))
+if(File.exist?(File.join(File.dirname(__FILE__), "config/wpi-custom.yml")))
   settings = YAML.load_file(File.join(File.dirname(__FILE__), "config/wpi-custom.yml"))
 else
   settings = YAML.load_file(File.join(File.dirname(__FILE__), "config/wpi-default.yml"))
@@ -20,6 +20,7 @@ end
 
 Vagrant.configure("2") do |config|
   config.vm.box = settings["vm_box"] ||= "wpi/box"
+  config.vm.box_version = "04.2020"
   config.vm.provider settings["provider"] ||= "virtualbox"
 
   [
