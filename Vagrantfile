@@ -6,8 +6,6 @@
 #
 # Author: Dima Minka
 # URL: https://wpi.pw/box/
-#
-# File Version: 1.2.2
 
 require 'yaml'
 
@@ -20,7 +18,6 @@ end
 
 Vagrant.configure("2") do |config|
   config.vm.box = settings["vm_box"] ||= "wpi/box"
-  config.vm.box_version = "04.2020"
   config.vm.provider settings["provider"] ||= "virtualbox"
 
   [
@@ -78,18 +75,11 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  # Disabling the default /vagrant share
-  config.vm.synced_folder '.', '/vagrant', disabled: true
-
-  # Register The Configured Shared Folder, for ubuntu use - owner: "www-data", group: "www-data", create: true
-  config.vm.synced_folder "apps", "/home/vagrant/apps", type: "nfs", create: true
-  config.vm.synced_folder "config", "/home/vagrant/config"
-
   config.ssh.forward_agent = true
 
   # Running provision scripts for wpi-vagrant
-  config.vm.provision "shell", inline: "wget -qO wip wip.wpi.pw && bash wip"
+  config.vm.provision "shell", inline: "bash <(curl -s -L wpi.pw/bin/vagrant/provision.sh)"
 
   # Running provision up scripts on every loading
-  config.vm.provision "shell", inline: "wget -qO wpi-up up.wpi.pw && bash wpi-up", run: "always"
+  config.vm.provision "shell", inline: "bash <(curl -s -L wpi.pw/bin/vagrant/up.sh)", run: "always"
 end
