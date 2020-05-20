@@ -10,10 +10,8 @@
 require 'yaml'
 
 # Load the settings file
-if(File.exist?(File.join(File.dirname(__FILE__), "config/wpi-custom.yml")))
-  settings = YAML.load_file(File.join(File.dirname(__FILE__), "config/wpi-custom.yml"))
-else
-  settings = YAML.load_file(File.join(File.dirname(__FILE__), "config/wpi-default.yml"))
+if(File.exist?(File.join(File.dirname(__FILE__), "config.yml")))
+  settings = YAML.load_file(File.join(File.dirname(__FILE__), "config.yml"))
 end
 
 Vagrant.configure("2") do |config|
@@ -55,25 +53,27 @@ Vagrant.configure("2") do |config|
   config.vm.network :forwarded_port, guest: 80, host: 8080
   config.vm.network :forwarded_port, guest: 443, host: 443
 
-  # Copy The SSH Private Keys To The Box
-  if settings.include? 'keys'
-    if settings["keys"].to_s.length == 0
-      puts "Check your wpi-default.yml file, you have no private key(s) specified."
-      exit
-    end
-    settings["keys"].each do |key|
-      if File.exists? File.expand_path(key)
-        config.vm.provision "shell" do |s|
-          s.privileged = false
-          s.inline = "echo \"$1\" > /home/vagrant/.ssh/$2 && chmod 600 /home/vagrant/.ssh/$2"
-          s.args = [File.read(File.expand_path(key)), key.split('/').last]
-        end
-      else
-        puts "Check your wpi-default.yml file, the path to your private key does not exist."
-        exit
-      end
-    end
+  # Copy The SSH Private/Public Keys To The Box
+  if File.exists? File.expand_path(settings["id_rsa"])
+    config.vm.provision "shell" do |s|
+    s.privileged = false
+    s.inline = "echo \"$1\" > /home/vagrant/.ssh/$2 && chmod 600 /home/vagrant/.ssh/$2"
+    s.args = [File.read(File.expand_path(settings["id_rsa"])), settings["id_rsa"].split('/').last]
   end
+  else
+    puts "Check your config.yml file, the path to your private key does not exist."
+    exit
+  end
+  if File.exists? File.expand_path(settings["id_rsa_pub"])
+    config.vm.provision "shell" do |s|
+    s.privileged = false
+    s.inline = "echo \"$1\" > /home/vagrant/.ssh/$2 && chmod 600 /home/vagrant/.ssh/$2"
+    s.args = [File.read(File.expand_path(settings["id_rsa_pub"])), settings["id_rsa_pub"].split('/').last]
+  end
+  else
+    puts "The path to your public key does not exist... Put the file manually..."
+  end
+
 
   config.ssh.forward_agent = true
 
