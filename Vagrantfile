@@ -74,6 +74,8 @@ Vagrant.configure("2") do |config|
     puts "The path to your public key does not exist... Put the file manually..."
   end
 
+  # Sync current directory with vagrant
+  config.vm.synced_folder ".", "/vagrant", type: "nfs", create: true  
 
   config.ssh.forward_agent = true
 
